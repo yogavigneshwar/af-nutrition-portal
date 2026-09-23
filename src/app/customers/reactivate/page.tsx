@@ -171,6 +171,40 @@ function ReactivateContent() {
               </button>
             ))}
           </div>
+
+          {duration === 'Custom' && (
+            <div className="mt-3.5 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 space-y-1.5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Custom Renewal Duration (Days Count) *
+                </label>
+                <span className="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200">
+                  Editable
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="number"
+                  value={customDays === 0 ? '' : customDays}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const days = val === '' ? 0 : parseInt(val, 10) || 0;
+                    setCustomDays(days);
+                    const cost = calculateTotalPlanCost(days, 150);
+                    setPlanCost(cost);
+                    setAmountPaid(cost);
+                  }}
+                  placeholder="e.g. 45"
+                  className="w-48 px-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white text-xs font-black text-slate-900 focus:ring-2 focus:ring-brand-500/20 shadow-xs"
+                  min={1}
+                  max={365}
+                />
+                <span className="text-xs font-bold text-slate-600">
+                  Days ({customDays * (customer?.dailyShakeFrequency || 1)} Shakes Allocated)
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Pricing Parameters */}
