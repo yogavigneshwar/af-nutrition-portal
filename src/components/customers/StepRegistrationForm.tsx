@@ -274,10 +274,14 @@ export const StepRegistrationForm: React.FC = () => {
                   </label>
                   <input
                     type="number"
-                    value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: parseInt(e.target.value) || 25 })}
+                    value={formData.age === 0 ? '' : formData.age}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, age: val === '' ? 0 : parseInt(val, 10) || 0 });
+                    }}
+                    placeholder="25"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 bg-emerald-50/20 text-xs text-slate-900 font-semibold"
-                    min={10}
+                    min={1}
                     max={100}
                   />
                 </div>
@@ -506,9 +510,10 @@ export const StepRegistrationForm: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={formData.customDays}
+                  value={formData.customDays === 0 ? '' : formData.customDays}
                   onChange={(e) => {
-                    const days = parseInt(e.target.value) || 1;
+                    const val = e.target.value;
+                    const days = val === '' ? 0 : parseInt(val, 10) || 0;
                     const cost = calculateTotalPlanCost(days, 150);
                     setFormData({
                       ...formData,
@@ -517,6 +522,7 @@ export const StepRegistrationForm: React.FC = () => {
                       amountPaid: cost,
                     });
                   }}
+                  placeholder="30"
                   className="w-48 px-3.5 py-2 rounded-xl border border-emerald-200/80 text-xs font-bold"
                   min={1}
                   max={365}
@@ -553,16 +559,17 @@ export const StepRegistrationForm: React.FC = () => {
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">₹</span>
                   <input
                     type="number"
-                    value={formData.planCost}
+                    value={formData.planCost === 0 ? '' : formData.planCost}
                     onChange={(e) => {
-                      const cost = parseInt(e.target.value) || 0;
+                      const val = e.target.value;
+                      const cost = val === '' ? 0 : parseInt(val, 10) || 0;
                       setFormData({
                         ...formData,
                         planCost: cost,
                         amountPaid: cost,
                       });
                     }}
-                    placeholder="e.g. 4500"
+                    placeholder="0"
                     className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white text-xs font-black text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 shadow-xs"
                     min={0}
                   />
@@ -635,9 +642,15 @@ export const StepRegistrationForm: React.FC = () => {
                 </label>
                 <input
                   type="number"
-                  value={formData.amountPaid}
-                  onChange={(e) => setFormData({ ...formData, amountPaid: parseInt(e.target.value) || 0 })}
+                  value={formData.amountPaid === 0 ? '' : formData.amountPaid}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const paid = val === '' ? 0 : parseInt(val, 10) || 0;
+                    setFormData({ ...formData, amountPaid: paid });
+                  }}
+                  placeholder="0"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs font-black text-emerald-700 focus:ring-2 focus:ring-brand-500/20"
+                  min={0}
                   max={calculatedTotalCost}
                 />
               </div>

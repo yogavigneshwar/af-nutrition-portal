@@ -257,8 +257,12 @@ export default function CatalogPage() {
             </label>
             <input
               type="number"
-              value={newStockVal}
-              onChange={(e) => setNewStockVal(parseInt(e.target.value) || 0)}
+              value={newStockVal === 0 ? '' : newStockVal}
+              onChange={(e) => {
+                const val = e.target.value;
+                setNewStockVal(val === '' ? 0 : parseInt(val, 10) || 0);
+              }}
+              placeholder="0"
               className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-brand-500/20"
               min={0}
               required
@@ -373,9 +377,14 @@ export default function CatalogPage() {
               </label>
               <input
                 type="number"
-                value={newProd.price}
-                onChange={(e) => setNewProd({ ...newProd, price: parseInt(e.target.value) || 0 })}
+                value={newProd.price === 0 ? '' : newProd.price}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewProd({ ...newProd, price: val === '' ? 0 : parseInt(val, 10) || 0 });
+                }}
+                placeholder="0"
                 className="w-full px-3 py-2 rounded-xl border border-emerald-200/80 text-xs font-bold"
+                min={0}
                 required
               />
             </div>
@@ -386,9 +395,14 @@ export default function CatalogPage() {
               </label>
               <input
                 type="number"
-                value={newProd.costPrice}
-                onChange={(e) => setNewProd({ ...newProd, costPrice: parseInt(e.target.value) || 0 })}
+                value={newProd.costPrice === 0 ? '' : newProd.costPrice}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewProd({ ...newProd, costPrice: val === '' ? 0 : parseInt(val, 10) || 0 });
+                }}
+                placeholder="0"
                 className="w-full px-3 py-2 rounded-xl border border-emerald-200/80 text-xs font-bold"
+                min={0}
                 required
               />
             </div>
@@ -399,9 +413,14 @@ export default function CatalogPage() {
               </label>
               <input
                 type="number"
-                value={newProd.stock}
-                onChange={(e) => setNewProd({ ...newProd, stock: parseInt(e.target.value) || 0 })}
+                value={newProd.stock === 0 ? '' : newProd.stock}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewProd({ ...newProd, stock: val === '' ? 0 : parseInt(val, 10) || 0 });
+                }}
+                placeholder="0"
                 className="w-full px-3 py-2 rounded-xl border border-emerald-200/80 text-xs"
+                min={0}
               />
             </div>
 
@@ -411,9 +430,14 @@ export default function CatalogPage() {
               </label>
               <input
                 type="number"
-                value={newProd.minStockAlert}
-                onChange={(e) => setNewProd({ ...newProd, minStockAlert: parseInt(e.target.value) || 5 })}
+                value={newProd.minStockAlert === 0 ? '' : newProd.minStockAlert}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewProd({ ...newProd, minStockAlert: val === '' ? 0 : parseInt(val, 10) || 0 });
+                }}
+                placeholder="5"
                 className="w-full px-3 py-2 rounded-xl border border-emerald-200/80 text-xs"
+                min={0}
               />
             </div>
 

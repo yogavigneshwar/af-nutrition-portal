@@ -188,12 +188,14 @@ function ReactivateContent() {
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-xs">₹</span>
               <input
                 type="number"
-                value={planCost}
+                value={planCost === 0 ? '' : planCost}
                 onChange={(e) => {
-                  const cost = parseInt(e.target.value) || 0;
+                  const val = e.target.value;
+                  const cost = val === '' ? 0 : parseInt(val, 10) || 0;
                   setPlanCost(cost);
                   setAmountPaid(cost);
                 }}
+                placeholder="0"
                 className="w-full pl-8 pr-3.5 py-2.5 rounded-xl border border-emerald-300 bg-white text-xs font-black text-slate-900 focus:ring-2 focus:ring-brand-500/20"
                 min={0}
               />
@@ -206,9 +208,14 @@ function ReactivateContent() {
             </label>
             <input
               type="number"
-              value={amountPaid}
-              onChange={(e) => setAmountPaid(parseInt(e.target.value) || 0)}
+              value={amountPaid === 0 ? '' : amountPaid}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAmountPaid(val === '' ? 0 : parseInt(val, 10) || 0);
+              }}
+              placeholder="0"
               className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs font-black text-emerald-700 bg-white"
+              min={0}
               max={totalCost}
             />
           </div>

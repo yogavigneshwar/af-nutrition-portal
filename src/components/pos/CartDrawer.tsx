@@ -329,10 +329,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </label>
               <input
                 type="number"
-                value={discount}
-                onChange={(e) => setDiscount(Math.max(0, parseInt(e.target.value) || 0))}
+                value={discount === 0 ? '' : discount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setDiscount(val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0));
+                }}
                 className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold"
                 placeholder="0"
+                min={0}
               />
             </div>
             <div>
