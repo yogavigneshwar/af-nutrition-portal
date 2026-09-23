@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   User, Phone, Mail, MapPin, HeartPulse, 
   Calendar, ShieldCheck, CreditCard, CheckCircle2, 
-  ArrowRight, ArrowLeft, Award, Sparkles, Calculator, FileText
+  ArrowRight, ArrowLeft, Award, Sparkles, Calculator, FileText, RefreshCw
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { CustomerType, ProgramDuration, PaymentMethod } from '../../types';
@@ -22,6 +22,7 @@ export const StepRegistrationForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [completedInvoice, setCompletedInvoice] = useState<any>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -110,44 +111,53 @@ export const StepRegistrationForm: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    const dailyRate = durationDays > 0 ? Math.round(Number(formData.planCost) / durationDays) : 150;
-    const newCust = addCustomer(
-      {
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
-        gender: formData.gender,
-        age: Number(formData.age),
-        address: formData.address,
-        emergencyContact: formData.emergencyContact,
-        branch: formData.branch,
-        inviterType: formData.inviterType,
-        inviterName: formData.inviterName,
-        inviterContact: formData.inviterContact,
-        counselingBy: formData.counselingBy,
-        healthGoals: formData.healthGoals,
-        medicalNotes: formData.medicalNotes,
-        customerType: formData.customerType,
-        currentProgram: formData.currentProgram,
-        programDuration: formData.programDuration,
-        durationInDays: durationDays,
-        startDate: formData.startDate,
-        allottedShakes: calculatedShakes,
-        dailyShakeFrequency: formData.dailyShakeFrequency,
-        pricePerDay: dailyRate,
-        totalPlanCost: Number(formData.planCost),
-        remarks: formData.remarks,
-      },
-      {
-        amountPaid: Number(formData.amountPaid),
-        paymentMethod: formData.paymentMethod,
-        notes: formData.paymentNotes,
-      }
-    );
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
+    try {
+      const dailyRate = durationDays > 0 ? Math.round(Number(formData.planCost) / durationDays) : 150;
+      const newCust = addCustomer(
+        {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          gender: formData.gender,
+          age: Number(formData.age),
+          address: formData.address,
+          emergencyContact: formData.emergencyContact,
+          branch: formData.branch,
+          inviterType: formData.inviterType,
+          inviterName: formData.inviterName,
+          inviterContact: formData.inviterContact,
+          counselingBy: formData.counselingBy,
+          healthGoals: formData.healthGoals,
+          medicalNotes: formData.medicalNotes,
+          customerType: formData.customerType,
+          currentProgram: formData.currentProgram,
+          programDuration: formData.programDuration,
+          durationInDays: durationDays,
+          startDate: formData.startDate,
+          allottedShakes: calculatedShakes,
+          dailyShakeFrequency: formData.dailyShakeFrequency,
+          pricePerDay: dailyRate,
+          totalPlanCost: Number(formData.planCost),
+          remarks: formData.remarks,
+        },
+        {
+          amountPaid: Number(formData.amountPaid),
+          paymentMethod: formData.paymentMethod,
+          notes: formData.paymentNotes,
+        }
+      );
 
-    const inv = invoices[0];
-    setCompletedInvoice(inv);
-    setShowInvoiceModal(true);
+      const inv = invoices[0];
+      setCompletedInvoice(inv);
+      setShowInvoiceModal(true);
+    } catch (err) {
+      console.error('Registration failed:', err);
+    } finally {
+      setTimeout(() => setIsSubmitting(false), 2000);
+    }
   };
 
   return (
@@ -794,9 +804,22 @@ export const StepRegistrationForm: React.FC = () => {
             <button
               type="button"
               onClick={handleSubmit}
-              className="px-8 py-3 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 shadow-xl shadow-gold-950/20 flex items-center gap-2 transition-all active:scale-95 border border-gold-300/30 cursor-pointer"
+              disabled={isSubmitting}
+              className={`px-8 py-3 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-gold-600 to-gold-500 hover:from-gold-500 hover:to-gold-400 shadow-xl shadow-gold-950/20 flex items-center gap-2 transition-all active:scale-95 border border-gold-300/30 ${
+                isSubmitting ? 'opacity-60 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+              }`}
             >
-              <Sparkles className="w-4 h-4 text-white" /> Complete Registration & Issue Invoice
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="w-4 h-4 text-white animate-spin" />
+                  <span>Registering Member & Creating Invoice...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span>Complete Registration & Issue Invoice</span>
+                </>
+              )}
             </button>
           )}
         </div>

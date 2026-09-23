@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { 
   User, Phone, Mail, MapPin, Calendar, 
   Coffee, UtensilsCrossed, CalendarCheck, 
-  CreditCard, ArrowRight, ShieldCheck, HeartPulse, RefreshCw, Sparkles, Award, CheckCircle2
+  CreditCard, ArrowRight, ShieldCheck, HeartPulse, RefreshCw, Sparkles, Award, CheckCircle2, Trash2
 } from 'lucide-react';
 import { Customer } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -29,7 +29,7 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
   onOpenSeminarLogger,
 }) => {
   const router = useRouter();
-  const { shakeLogs, orders, seminars, invoices, promoteCustomerToAssociate } = useApp();
+  const { shakeLogs, orders, seminars, invoices, promoteCustomerToAssociate, deleteCustomer } = useApp();
   const [activeTab, setActiveTab] = useState<'overview' | 'shakes' | 'orders' | 'seminars' | 'billing'>('overview');
   const [showPromoteConfirm, setShowPromoteConfirm] = useState(false);
   const [promoteNotes, setPromoteNotes] = useState('');
@@ -60,6 +60,13 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
     setShowPromoteConfirm(false);
     setIsPromoted(true);
     setTimeout(() => setIsPromoted(false), 5000);
+  };
+
+  const handleDeleteCustomer = () => {
+    if (window.confirm(`Are you sure you want to permanently delete profile for "${customer.fullName}" (${customer.id})?`)) {
+      deleteCustomer(customer.id);
+      onClose();
+    }
   };
 
   const modalTitle = customer.fullName + ' - 360 Degree Profile';
@@ -136,6 +143,16 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 <span>Shift to Associate</span>
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={handleDeleteCustomer}
+              className="px-3 py-2 rounded-xl bg-rose-900/60 hover:bg-rose-900 text-rose-200 text-xs font-bold flex items-center gap-1.5 border border-rose-700/60 shadow-sm transition-all cursor-pointer"
+              title="Delete Customer Profile"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-300" />
+              <span>Delete</span>
+            </button>
           </div>
         </div>
 

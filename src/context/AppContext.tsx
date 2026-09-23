@@ -35,6 +35,7 @@ interface AppContextType {
 
   // Customer Actions
   addCustomer: (data: Partial<Customer>, paymentInfo: { amountPaid: number; paymentMethod: PaymentMethod; notes?: string }) => Customer;
+  deleteCustomer: (customerId: string) => void;
   renewCustomer: (customerId: string, duration: ProgramDuration, customDays?: number, pricePerDay?: number, amountPaid?: number, paymentMethod?: PaymentMethod) => void;
   updateCustomer: (customerId: string, updates: Partial<Customer>) => void;
   promoteCustomerToAssociate: (customerId: string, notes?: string) => Customer | undefined;
@@ -220,11 +221,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     data: Partial<Customer>,
     paymentInfo: { amountPaid: number; paymentMethod: PaymentMethod; notes?: string }
   ): Customer => {
+    // Prevent accidental rapid duplicate registrations (same phone & name within 15 seconds)
+    const normalizedPhone = (data.phone || '').trim().replace(/\D/g, '');
+    const normalizedName = (data.fullName || '').trim().toLowerCase();
+    
+    const recentDuplicate = customers.find(c => {
+      const cPhone = (c.phone || '').trim().replace(/\D/g, '');
+      const cName = (c.fullName || '').trim().toLowerCase();
+      const timeDiff = Date.now() - new Date(c.createdAt || Date.now()).getTime();
+      return cPhone === normalizedPhone && cName === normalizedName && timeDiff < 15000;
+    });
+
+    if (recentDuplicate) {
+      return recentDuplicate;
+    }
+
     const durationDays = calculateProgramDays(data.programDuration || '30 Days', data.durationInDays);
     const totalCost = data.totalPlanCost !== undefined ? Number(data.totalPlanCost) : calculateTotalPlanCost(durationDays, data.pricePerDay || 150);
     const dailyRate = data.pricePerDay || (durationDays > 0 ? Math.round(totalCost / durationDays) : 150);
     const shakesAllotted = data.allottedShakes || durationDays * (data.dailyShakeFrequency || 1);
-    const newId = generateCustomerId(customers.length);
+    
+    // Ensure genuinely unique customer ID
+    let idIndex = customers.length + 1;
+    let newId = generateCustomerId(idIndex);
+    while (customers.some(c => c.id === newId)) {
+      idIndex++;
+      newId = generateCustomerId(idIndex);
+    }
+
     const today = new Date();
     const startDate = data.startDate || today.toISOString().split('T')[0];
     const end = new Date(startDate);
@@ -310,6 +334,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCustomers(prev => [newCustomer, ...prev]);
     setInvoices(prev => [newInvoice, ...prev]);
     return newCustomer;
+  };
+
+  const deleteCustomer = (customerId: string) => {
+    setCustomers(prev => prev.filter(c => c.id !== customerId));
+    setShakeLogs(prev => prev.filter(s => s.customerId !== customerId));
+    setSeminars(prev => prev.filter(s => s.customerId !== customerId));
   };
 
   const renewCustomer = (
@@ -947,6 +977,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         selectedBranch,
         setSelectedBranch,
         addCustomer,
+        deleteCustomer,
         renewCustomer,
         updateCustomer,
         promoteCustomerToAssociate,

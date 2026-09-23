@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Users, UserPlus, Search, Filter, 
   Coffee, UtensilsCrossed, CalendarCheck, 
-  RefreshCw, Eye, Award, ArrowUpRight, Sparkles, CheckCircle2, ShieldCheck, X 
+  RefreshCw, Eye, Award, ArrowUpRight, Sparkles, CheckCircle2, ShieldCheck, X, Trash2, AlertTriangle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Customer, CustomerType } from '../../types';
@@ -21,7 +21,7 @@ function CustomerContent() {
   const searchParams = useSearchParams();
   const searchParamQuery = searchParams.get('search') || '';
 
-  const { customers, metrics, promoteCustomerToAssociate } = useApp();
+  const { customers, metrics, promoteCustomerToAssociate, deleteCustomer } = useApp();
   const [searchQuery, setSearchQuery] = useState(searchParamQuery);
   const [typeFilter, setTypeFilter] = useState<string>('All');
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -51,6 +51,32 @@ function CustomerContent() {
 
     return matchesQuery && matchesType && matchesStatus;
   });
+
+  // Check for duplicate customer records (same phone number)
+  const phoneCounts = customers.reduce((acc, c) => {
+    const p = (c.phone || '').trim().replace(/\D/g, '');
+    if (p && p.length >= 10) acc[p] = (acc[p] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const duplicatePhoneKeys = Object.keys(phoneCounts).filter(p => phoneCounts[p] > 1);
+  const hasDuplicates = duplicatePhoneKeys.length > 0;
+
+  const handleCleanDuplicates = () => {
+    if (!window.confirm('Clean duplicate customer records? This will keep the original customer profile and safely remove duplicate copies.')) return;
+    const seen = new Set<string>();
+    customers.forEach(c => {
+      const p = (c.phone || '').trim().replace(/\D/g, '');
+      if (p && p.length >= 10) {
+        if (seen.has(p)) {
+          deleteCustomer(c.id);
+        } else {
+          seen.add(p);
+        }
+      }
+    });
+    setToastMessage('Duplicate customer profiles removed successfully!');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
 
   const getCustomerTypeVariant = (type: CustomerType) => {
     switch (type) {
@@ -202,6 +228,33 @@ function CustomerContent() {
           ))}
         </div>
       </div>
+
+      {/* Duplicate Record Detector Banner */}
+      {hasDuplicates && (
+        <div className="bg-amber-50/90 border border-amber-300 rounded-3xl p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-gold-500 text-white flex items-center justify-center shrink-0 shadow-sm font-black">
+              <AlertTriangle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                Duplicate Customer Records Found ({duplicatePhoneKeys.length} phone numbers have duplicates)
+              </p>
+              <p className="text-[11px] text-amber-800 font-medium">
+                Identical duplicate registrations were detected in the registry. You can clean them automatically or remove specific copies with the trash icon.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleCleanDuplicates}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-gold-600 hover:from-amber-500 hover:to-gold-500 text-white font-black text-xs shadow-md shadow-amber-950/20 transition-all shrink-0 cursor-pointer active:scale-95 border border-gold-300/40 flex items-center gap-1.5"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Clean Duplicate Records</span>
+          </button>
+        </div>
+      )}
 
       {/* Customer Registry Table */}
       <div className="bg-white rounded-3xl border border-emerald-100/80 shadow-sm overflow-hidden">
@@ -368,6 +421,23 @@ function CustomerContent() {
                             title="Renew Program Plan"
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Delete Customer */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Are you sure you want to permanently delete customer profile for "${cust.fullName}" (${cust.id})?`)) {
+                                deleteCustomer(cust.id);
+                                setToastMessage(`Customer ${cust.fullName} (${cust.id}) deleted successfully.`);
+                                setTimeout(() => setToastMessage(null), 3500);
+                              }
+                            }}
+                            className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors border border-rose-200/60 cursor-pointer"
+                            title="Delete Customer Profile"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
