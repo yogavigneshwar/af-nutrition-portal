@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   DollarSign, ShoppingBag, UtensilsCrossed, Users, 
-  Coffee, CalendarCheck, AlertTriangle, ArrowRight, 
+  Coffee, AlertTriangle, ArrowRight, 
   Sparkles, Flame, Plus, Award, ChevronRight, Activity, Tv,
   CheckCircle2, Clock, ShieldCheck, TrendingUp, HeartHandshake, Eye
 } from 'lucide-react';
@@ -14,16 +14,14 @@ import { StatCard } from '../components/common/StatCard';
 import { Badge } from '../components/common/Badge';
 import { formatCurrency, formatDate, formatTime } from '../lib/utils';
 import { ShakeLoggerModal } from '../components/shakes/ShakeLoggerModal';
-import { SeminarLoggerModal } from '../components/seminars/SeminarLoggerModal';
 import { CustomerProfileModal } from '../components/customers/CustomerProfileModal';
 import { InvoiceModal } from '../components/common/InvoiceModal';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { metrics, customers, orders, selectedBranch, currentUser, invoices, seminars } = useApp();
+  const { metrics, customers, orders, selectedBranch, currentUser, invoices } = useApp();
 
   const [showShakeModal, setShowShakeModal] = useState(false);
-  const [showSeminarModal, setShowSeminarModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -34,7 +32,6 @@ export default function DashboardPage() {
   const activeCount = customers.filter(c => c.status === 'Active').length;
   const expiringCount = customers.filter(c => c.remainingShakes <= 3 && c.remainingShakes > 0).length;
   const expiredCount = customers.filter(c => c.remainingShakes <= 0).length;
-  const todaySeminarsCount = seminars.filter(s => s.date === todayStr).length;
 
   return (
     <div className="space-y-6 pb-12">
@@ -82,14 +79,6 @@ export default function DashboardPage() {
               <Plus className="w-4 h-4 text-brand-300" />
               <span>Register Member</span>
             </Link>
-
-            <button
-              onClick={() => setShowSeminarModal(true)}
-              className="px-4 py-2.5 rounded-2xl bg-brand-800/80 hover:bg-brand-700 text-brand-100 font-bold text-xs border border-brand-600/50 flex items-center space-x-2 transition-all"
-            >
-              <CalendarCheck className="w-4 h-4 text-gold-300" />
-              <span>Seminar Log</span>
-            </button>
           </div>
         </div>
       </div>
@@ -164,13 +153,13 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        <div className="bg-white rounded-2xl p-4 border border-emerald-100/70 shadow-sm hover:border-gold-300 transition-all flex items-center space-x-3.5">
-          <div className="w-10 h-10 rounded-xl bg-gold-50 text-gold-700 flex items-center justify-center font-black">
-            <CalendarCheck className="w-5 h-5 text-gold-600" />
+        <div className="bg-white rounded-2xl p-4 border border-emerald-100/70 shadow-sm hover:border-emerald-300 transition-all flex items-center space-x-3.5">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-black">
+            <TrendingUp className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
-            <div className="text-lg font-black text-slate-900">{todaySeminarsCount}</div>
-            <div className="text-[11px] font-semibold text-slate-500">Seminars Attended Today</div>
+            <div className="text-lg font-black text-slate-900">{metrics.todayOrders}</div>
+            <div className="text-[11px] font-semibold text-slate-500">Orders Placed Today</div>
           </div>
         </div>
 
@@ -430,10 +419,6 @@ export default function DashboardPage() {
         <ShakeLoggerModal isOpen={showShakeModal} onClose={() => setShowShakeModal(false)} />
       )}
 
-      {showSeminarModal && (
-        <SeminarLoggerModal isOpen={showSeminarModal} onClose={() => setShowSeminarModal(false)} />
-      )}
-
       {activeCustomer && (
         <CustomerProfileModal
           customer={activeCustomer}
@@ -443,7 +428,6 @@ export default function DashboardPage() {
             setSelectedCustomerId(null);
             setShowShakeModal(true);
           }}
-          onOpenSeminarLogger={() => {}}
         />
       )}
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   User, Phone, Mail, MapPin, Calendar, 
-  Coffee, UtensilsCrossed, CalendarCheck, 
+  Coffee, UtensilsCrossed, 
   CreditCard, ArrowRight, ShieldCheck, HeartPulse, RefreshCw, Sparkles, Award, CheckCircle2, Trash2
 } from 'lucide-react';
 import { Customer } from '../../types';
@@ -18,7 +18,6 @@ interface CustomerProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenShakeLogger: (customerId: string) => void;
-  onOpenSeminarLogger: (customerId: string) => void;
 }
 
 export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
@@ -26,11 +25,10 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
   isOpen,
   onClose,
   onOpenShakeLogger,
-  onOpenSeminarLogger,
 }) => {
   const router = useRouter();
-  const { shakeLogs, orders, seminars, invoices, promoteCustomerToAssociate, deleteCustomer } = useApp();
-  const [activeTab, setActiveTab] = useState<'overview' | 'shakes' | 'orders' | 'seminars' | 'billing'>('overview');
+  const { shakeLogs, orders, invoices, promoteCustomerToAssociate, deleteCustomer } = useApp();
+  const [activeTab, setActiveTab] = useState<'overview' | 'shakes' | 'orders' | 'billing'>('overview');
   const [showPromoteConfirm, setShowPromoteConfirm] = useState(false);
   const [promoteNotes, setPromoteNotes] = useState('');
   const [isPromoted, setIsPromoted] = useState(false);
@@ -39,7 +37,6 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
   const customerShakes = shakeLogs.filter(s => s.customerId === customer.id);
   const customerOrders = orders.filter(o => o.customerId === customer.id);
-  const customerSeminars = seminars.filter(s => s.customerId === customer.id);
   const customerInvoices = invoices.filter(i => i.customerId === customer.id);
 
   const isAssociate = customer.customerType === 'Associate' || customer.customerType === 'JP Member';
@@ -229,8 +226,8 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
           </div>
 
           <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
-            <p className="text-[10px] uppercase font-bold text-gold-400">Visits & Seminars</p>
-            <p className="text-xs font-bold text-white mt-0.5">{customer.clubVisitsCount} Visits • {customer.seminarAttendanceCount} Seminars</p>
+            <p className="text-[10px] uppercase font-bold text-gold-400">Total Visits</p>
+            <p className="text-xs font-bold text-white mt-0.5">{customer.clubVisitsCount} Club Visits</p>
             <p className="text-[10px] text-brand-200/70 mt-0.5">Coach: {customer.counselingBy}</p>
           </div>
 
@@ -248,7 +245,6 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
           { id: 'overview', label: 'Program & Goals' },
           { id: 'shakes', label: `Daily Shakes (${customerShakes.length})` },
           { id: 'orders', label: `POS Orders (${customerOrders.length})` },
-          { id: 'seminars', label: `Seminars (${customerSeminars.length})` },
           { id: 'billing', label: `Invoices (${customerInvoices.length})` },
         ].map(tab => (
           <button
@@ -407,29 +403,6 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                     ))}
                   </tbody>
                 </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'seminars' && (
-          <div>
-            {customerSeminars.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs">
-                No seminar workshops attended yet.
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {customerSeminars.map(sem => (
-                  <div key={sem.id} className="p-3.5 rounded-2xl bg-gold-50/60 border border-gold-200/80 flex items-start justify-between text-xs">
-                    <div>
-                      <p className="font-bold text-gold-950">{sem.topic}</p>
-                      <p className="text-slate-500 text-[11px] mt-0.5">Conducted by {sem.staffName} on {formatDate(sem.date)}</p>
-                      {sem.remarks && <p className="text-slate-700 mt-1 italic font-medium">Remarks: &quot;{sem.remarks}&quot;</p>}
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full bg-gold-600 text-white font-bold text-[10px] shadow-xs">Attended</span>
-                  </div>
-                ))}
               </div>
             )}
           </div>

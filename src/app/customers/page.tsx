@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Users, UserPlus, Search, Filter, 
-  Coffee, UtensilsCrossed, CalendarCheck, 
+  Coffee, UtensilsCrossed, 
   RefreshCw, Eye, Award, ArrowUpRight, Sparkles, CheckCircle2, ShieldCheck, X, Trash2, AlertTriangle
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -14,7 +14,6 @@ import { formatCurrency, formatDate } from '../../lib/utils';
 import { Badge } from '../../components/common/Badge';
 import { CustomerProfileModal } from '../../components/customers/CustomerProfileModal';
 import { ShakeLoggerModal } from '../../components/shakes/ShakeLoggerModal';
-import { SeminarLoggerModal } from '../../components/seminars/SeminarLoggerModal';
 
 function CustomerContent() {
   const router = useRouter();
@@ -28,7 +27,6 @@ function CustomerContent() {
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [shakeModalCustId, setShakeModalCustId] = useState<string | null>(null);
-  const [seminarModalCustId, setSeminarModalCustId] = useState<string | null>(null);
 
   // Shift to Associate Modal State
   const [shiftTargetCustomer, setShiftTargetCustomer] = useState<Customer | null>(null);
@@ -267,7 +265,7 @@ function CustomerContent() {
                 <th className="py-3.5 px-4">Active Plan</th>
                 <th className="py-3.5 px-4">Extra Nutrition</th>
                 <th className="py-3.5 px-4">Shakes Balance</th>
-                <th className="py-3.5 px-4 text-center">Visits / Seminars</th>
+                <th className="py-3.5 px-4 text-center">Club Visits</th>
                 <th className="py-3.5 px-4">Total Spent</th>
                 <th className="py-3.5 px-4 text-right">Actions & Profile</th>
               </tr>
@@ -355,10 +353,9 @@ function CustomerContent() {
                         </div>
                       </td>
 
-                      {/* Visits & Seminars */}
+                      {/* Club Visits */}
                       <td className="py-3.5 px-4 text-center">
                         <span className="font-bold text-slate-800">{cust.clubVisitsCount} visits</span>
-                        <p className="text-[10px] text-gold-700 font-bold">{cust.seminarAttendanceCount} seminars</p>
                       </td>
 
                       {/* Total Spent */}
@@ -568,10 +565,6 @@ function CustomerContent() {
           setSelectedCustomerId(null);
           setShakeModalCustId(id);
         }}
-        onOpenSeminarLogger={(id) => {
-          setSelectedCustomerId(null);
-          setSeminarModalCustId(id);
-        }}
       />
 
       {/* Global Modals for Quick Action from Table */}
@@ -579,12 +572,6 @@ function CustomerContent() {
         isOpen={!!shakeModalCustId}
         preSelectedCustomerId={shakeModalCustId || undefined}
         onClose={() => setShakeModalCustId(null)}
-      />
-
-      <SeminarLoggerModal
-        isOpen={!!seminarModalCustId}
-        preSelectedCustomerId={seminarModalCustId || undefined}
-        onClose={() => setSeminarModalCustId(null)}
       />
     </div>
   );

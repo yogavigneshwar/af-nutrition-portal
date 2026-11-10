@@ -60,7 +60,6 @@ export const Sidebar: React.FC = () => {
       title: 'Daily Tracking & Wellness',
       items: [
         { name: 'Daily Shake Intake', href: '/shakes', icon: Coffee, badge: 'Live Tracker' },
-        { name: 'Wellness Seminars', href: '/seminars', icon: CalendarCheck },
       ]
     },
     {

@@ -176,7 +176,6 @@ export default function ShakesPage() {
           setSelectedCustomerId(null);
           setShowLoggerModal(true);
         }}
-        onOpenSeminarLogger={() => {}}
       />
     </div>
   );

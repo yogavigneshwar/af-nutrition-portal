@@ -5,22 +5,28 @@ import Link from 'next/link';
 import { 
   Users, Award, Sparkles, UserPlus, 
   Search, ShieldCheck, Coffee, TrendingUp, 
-  ArrowUpRight, Phone, MapPin, Eye, PlusCircle, CheckCircle2 
+  ArrowUpRight, Phone, MapPin, Eye, PlusCircle, CheckCircle2,
+  Sliders, X, Plus, Minus, RotateCcw, AlertCircle, Edit3
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { Customer } from '../../types';
 import { formatCurrency, formatDate } from '../../lib/utils';
 import { CustomerProfileModal } from '../../components/customers/CustomerProfileModal';
 import { ShakeLoggerModal } from '../../components/shakes/ShakeLoggerModal';
-import { SeminarLoggerModal } from '../../components/seminars/SeminarLoggerModal';
 import { Badge } from '../../components/common/Badge';
 
 export default function AssociatesPage() {
-  const { customers, selectedBranch } = useApp();
+  const { customers, selectedBranch, updateCustomer } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [branchFilter, setBranchFilter] = useState('All');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [shakeModalCustId, setShakeModalCustId] = useState<string | null>(null);
-  const [seminarModalCustId, setSeminarModalCustId] = useState<string | null>(null);
+
+  // Manual Shake Adjustment State
+  const [editingShakeAssociate, setEditingShakeAssociate] = useState<Customer | null>(null);
+  const [manualShakeInput, setManualShakeInput] = useState<string>('0');
+  const [adjustmentReason, setAdjustmentReason] = useState<string>('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Filter for Associate members (and legacy JP Member entries)
   const associates = customers.filter(c => c.customerType === 'Associate' || c.customerType === 'JP Member');
@@ -51,8 +57,66 @@ export default function AssociatesPage() {
 
   const activeCustomer = customers.find(c => c.id === selectedCustomerId) || null;
 
+  // Handle open manual shake modal
+  const handleOpenShakeAdjust = (associate: Customer) => {
+    setEditingShakeAssociate(associate);
+    setManualShakeInput(String(associate.remainingShakes));
+    setAdjustmentReason('');
+  };
+
+  // Adjust shake count with quick delta buttons
+  const handleDeltaShakes = (delta: number) => {
+    const current = manualShakeInput === '' ? 0 : (parseInt(manualShakeInput, 10) || 0);
+    const updated = Math.max(0, current + delta);
+    setManualShakeInput(String(updated));
+  };
+
+  // Save manual shake balance
+  const handleSaveShakeBalance = () => {
+    if (!editingShakeAssociate) return;
+
+    const newRemaining = manualShakeInput === '' ? 0 : Math.max(0, parseInt(manualShakeInput, 10) || 0);
+    const prevRemaining = editingShakeAssociate.remainingShakes;
+    const delta = newRemaining - prevRemaining;
+
+    // Adjust allottedShakes if newRemaining exceeds existing margin
+    const newAllotted = Math.max(editingShakeAssociate.allottedShakes, editingShakeAssociate.consumedShakes + newRemaining);
+
+    const todayDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const logTag = `[Manual Shake Override: ${prevRemaining} → ${newRemaining} (${delta >= 0 ? '+' : ''}${delta}) on ${todayDate}${adjustmentReason.trim() ? ` - "${adjustmentReason.trim()}"` : ''}]`;
+
+    const updatedRemarks = [editingShakeAssociate.remarks, logTag].filter(Boolean).join(' | ');
+
+    updateCustomer(editingShakeAssociate.id, {
+      remainingShakes: newRemaining,
+      allottedShakes: newAllotted,
+      remarks: updatedRemarks,
+      status: newRemaining > 0 ? 'Active' : editingShakeAssociate.status
+    });
+
+    setToastMessage(`Shake balance for ${editingShakeAssociate.fullName} updated to ${newRemaining} shakes.`);
+    setTimeout(() => setToastMessage(null), 4000);
+
+    setEditingShakeAssociate(null);
+  };
+
   return (
     <div className="space-y-6 pb-12">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-emerald-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-emerald-500/40 flex items-center space-x-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-xs font-bold">{toastMessage}</span>
+          <button 
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-white/60 hover:text-white ml-2 p-1 rounded-lg"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-forest-950 via-forest-900 to-[#021811] rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border border-brand-700/40 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-80 h-80 bg-gold-400/10 rounded-full blur-3xl pointer-events-none" />
@@ -66,7 +130,7 @@ export default function AssociatesPage() {
             Associate Registry & Partner Network
           </h1>
           <p className="text-xs text-brand-100/80 mt-1 max-w-2xl font-medium leading-relaxed">
-            Manage Wellness Associates, track downline client referrals, monitor shake consumption, and promote active members into business partners.
+            Manage Wellness Associates, track downline client referrals, monitor shake consumption, manually adjust shake quotas, and promote active members into business partners.
           </p>
         </div>
 
@@ -196,10 +260,23 @@ export default function AssociatesPage() {
                       <p className="text-[10px] text-slate-400 font-bold uppercase">Referrals</p>
                       <p className="text-sm font-black text-gold-800">{referralCount} Clients</p>
                     </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase">Shakes Left</p>
-                      <p className="text-sm font-black text-brand-700">{cust.remainingShakes}</p>
-                    </div>
+
+                    {/* Shakes Left with manual edit trigger */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenShakeAdjust(cust)}
+                      className="p-1 rounded-xl hover:bg-emerald-100/60 transition-colors text-center group cursor-pointer border border-transparent hover:border-gold-300/60"
+                      title="Click to manually change shakes"
+                    >
+                      <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold uppercase">
+                        <span>Shakes Left</span>
+                        <Sliders className="w-2.5 h-2.5 text-gold-600 opacity-60 group-hover:opacity-100" />
+                      </div>
+                      <p className="text-sm font-black text-brand-700 group-hover:text-gold-700 transition-colors">
+                        {cust.remainingShakes}
+                      </p>
+                    </button>
+
                     <div>
                       <p className="text-[10px] text-slate-400 font-bold uppercase">Total Volume</p>
                       <p className="text-sm font-black text-slate-900">{formatCurrency(cust.totalSpent)}</p>
@@ -228,20 +305,35 @@ export default function AssociatesPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="pt-2 border-t border-emerald-100 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setShakeModalCustId(cust.id)}
-                      className="px-3.5 py-1.5 rounded-xl bg-brand-50 text-brand-900 hover:bg-brand-100 text-xs font-bold flex items-center gap-1 transition-colors border border-brand-200"
-                    >
-                      <Coffee className="w-3.5 h-3.5" />
-                      <span>Log Shake</span>
-                    </button>
+                  <div className="pt-2 border-t border-emerald-100 flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShakeModalCustId(cust.id)}
+                        className="px-3 py-1.5 rounded-xl bg-brand-50 text-brand-900 hover:bg-brand-100 text-xs font-bold flex items-center gap-1 transition-colors border border-brand-200"
+                        title="Log a daily shake intake"
+                      >
+                        <Coffee className="w-3.5 h-3.5" />
+                        <span>Log Shake</span>
+                      </button>
+
+                      {/* Manual Shake Changing Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenShakeAdjust(cust)}
+                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-gold-50 to-amber-50 hover:from-gold-100 hover:to-amber-100 text-gold-950 font-bold text-xs flex items-center gap-1.5 transition-all border border-gold-300 shadow-2xs active:scale-95 cursor-pointer"
+                        title="Manually adjust or override remaining shakes"
+                      >
+                        <Sliders className="w-3.5 h-3.5 text-gold-700" />
+                        <span>Change Shakes</span>
+                      </button>
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => setSelectedCustomerId(cust.id)}
-                      className="px-4 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 border border-slate-200 shadow-xs transition-colors"
+                      className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 border border-slate-200 shadow-xs transition-colors"
+                      title="View Associate 360 Profile"
                     >
                       <Eye className="w-3.5 h-3.5 text-brand-600" />
                       <span>Associate 360</span>
@@ -254,6 +346,185 @@ export default function AssociatesPage() {
         )}
       </div>
 
+      {/* Manual Shake Changing Modal */}
+      {editingShakeAssociate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-emerald-200/80 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-forest-950 via-forest-900 to-brand-950 p-6 text-white relative">
+              <button
+                type="button"
+                onClick={() => setEditingShakeAssociate(null)}
+                className="absolute right-4 top-4 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              
+              <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-gold-500/20 text-gold-300 text-[10px] font-black uppercase tracking-wider border border-gold-400/30 mb-2">
+                <Sliders className="w-3 h-3 text-gold-400" />
+                <span>Manual Shake Adjustment</span>
+              </div>
+              <h3 className="text-lg font-black text-white">
+                {editingShakeAssociate.fullName}
+              </h3>
+              <p className="text-xs text-brand-100/80 mt-0.5">
+                {editingShakeAssociate.associateId || `ASC-${editingShakeAssociate.id.replace('AF-', '')}`} • {editingShakeAssociate.phone}
+              </p>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              {/* Current Status Box */}
+              <div className="grid grid-cols-3 gap-2 bg-emerald-50/50 rounded-2xl p-3 border border-emerald-100 text-center text-xs">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Current Left</p>
+                  <p className="text-base font-black text-brand-800">{editingShakeAssociate.remainingShakes}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Consumed</p>
+                  <p className="text-base font-black text-slate-700">{editingShakeAssociate.consumedShakes}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Total Quota</p>
+                  <p className="text-base font-black text-gold-800">{editingShakeAssociate.allottedShakes}</p>
+                </div>
+              </div>
+
+              {/* Number Input with Zero-Clearing support */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+                  New Remaining Shakes Balance
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={manualShakeInput}
+                    onChange={(e) => setManualShakeInput(e.target.value)}
+                    className="w-full py-3.5 px-4 rounded-2xl bg-emerald-50/40 border-2 border-emerald-300/80 text-center text-3xl font-black text-slate-900 focus:outline-none focus:ring-4 focus:ring-brand-500/20 focus:border-brand-600 transition-all"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 text-center font-medium">
+                  Type any number directly or tap quick adjustment buttons below.
+                </p>
+              </div>
+
+              {/* Quick Delta Buttons */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quick Adjustments:</span>
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDeltaShakes(1)}
+                    className="py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <Plus className="w-3 h-3 text-emerald-600" /> 1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeltaShakes(5)}
+                    className="py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <Plus className="w-3 h-3 text-emerald-600" /> 5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeltaShakes(10)}
+                    className="py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <Plus className="w-3 h-3 text-emerald-600" /> 10
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeltaShakes(20)}
+                    className="py-2 rounded-xl bg-gold-50 hover:bg-gold-100 text-gold-900 font-bold text-xs border border-gold-300 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <Plus className="w-3 h-3 text-gold-600" /> 20
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleDeltaShakes(-1)}
+                    className="py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <Minus className="w-3 h-3 text-rose-600" /> 1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeltaShakes(-5)}
+                    className="py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <Minus className="w-3 h-3 text-rose-600" /> 5
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualShakeInput('0')}
+                    className="py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition-all active:scale-95 flex items-center justify-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3 text-slate-500" /> Clear (0)
+                  </button>
+                </div>
+              </div>
+
+              {/* Net Difference Indicator */}
+              {(() => {
+                const target = manualShakeInput === '' ? 0 : (parseInt(manualShakeInput, 10) || 0);
+                const diff = target - editingShakeAssociate.remainingShakes;
+                return (
+                  <div className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between ${
+                    diff > 0 
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : diff < 0
+                      ? 'bg-amber-50 border-amber-200 text-amber-800'
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                  }`}>
+                    <span>Net Change:</span>
+                    <span className="font-black text-sm">
+                      {diff > 0 ? `+${diff} shakes added` : diff < 0 ? `${diff} shakes deducted` : 'No change'}
+                    </span>
+                  </div>
+                );
+              })()}
+
+              {/* Adjustment Reason Field */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  Reason / Remarks for Adjustment <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Special club bonus, top-up correction, referral reward..."
+                  value={adjustmentReason}
+                  onChange={(e) => setAdjustmentReason(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                />
+              </div>
+
+              {/* Modal Action Buttons */}
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingShakeAssociate(null)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveShakeBalance}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-emerald-500 hover:from-brand-500 hover:to-emerald-400 text-white text-xs font-black shadow-lg shadow-brand-950/20 flex items-center space-x-2 transition-all active:scale-95 cursor-pointer border border-emerald-400/40"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                  <span>Save Shake Balance</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Customer 360 Drawer Modal */}
       <CustomerProfileModal
         isOpen={!!selectedCustomerId}
@@ -263,10 +534,6 @@ export default function AssociatesPage() {
           setSelectedCustomerId(null);
           setShakeModalCustId(id);
         }}
-        onOpenSeminarLogger={(id) => {
-          setSelectedCustomerId(null);
-          setSeminarModalCustId(id);
-        }}
       />
 
       {/* Shake Intake Modal */}
@@ -274,13 +541,6 @@ export default function AssociatesPage() {
         isOpen={!!shakeModalCustId}
         onClose={() => setShakeModalCustId(null)}
         preSelectedCustomerId={shakeModalCustId || undefined}
-      />
-
-      {/* Seminar Logger Modal */}
-      <SeminarLoggerModal
-        isOpen={!!seminarModalCustId}
-        onClose={() => setSeminarModalCustId(null)}
-        preSelectedCustomerId={seminarModalCustId || undefined}
       />
     </div>
   );

@@ -3,14 +3,14 @@
 import React from 'react';
 import { 
   BarChart3, TrendingUp, Users, DollarSign, 
-  Coffee, CalendarCheck, Package, Flame, Award, Sparkles 
+  Coffee, Package, Flame, Award, Sparkles 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency } from '../../lib/utils';
 import { StatCard } from '../../components/common/StatCard';
 
 export default function InsightsPage() {
-  const { metrics, customers, orders, products, shakeLogs, seminars, invoices } = useApp();
+  const { metrics, customers, orders, products, shakeLogs, invoices } = useApp();
 
   // Category sales breakdown
   const categorySales: { [cat: string]: number } = {};
@@ -84,10 +84,10 @@ export default function InsightsPage() {
         />
 
         <StatCard
-          title="Educational Engagement"
-          value={`${seminars.length} Attendances`}
-          subtitle="Across all wellness workshops"
-          icon={<CalendarCheck className="w-5 h-5" />}
+          title="Active Wellness Plans"
+          value={`${customers.filter(c => c.status === 'Active').length} Active`}
+          subtitle={`${customers.filter(c => c.remainingShakes <= 3 && c.remainingShakes > 0).length} expiring soon`}
+          icon={<Sparkles className="w-5 h-5" />}
           color="gold"
         />
       </div>
