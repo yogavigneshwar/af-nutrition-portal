@@ -265,6 +265,7 @@ function CustomerContent() {
                 <th className="py-3.5 px-4">Customer Details</th>
                 <th className="py-3.5 px-4">Type</th>
                 <th className="py-3.5 px-4">Active Plan</th>
+                <th className="py-3.5 px-4">Extra Nutrition</th>
                 <th className="py-3.5 px-4">Shakes Balance</th>
                 <th className="py-3.5 px-4 text-center">Visits / Seminars</th>
                 <th className="py-3.5 px-4">Total Spent</th>
@@ -274,7 +275,7 @@ function CustomerContent() {
             <tbody className="divide-y divide-slate-100">
               {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     <Users className="w-10 h-10 mx-auto mb-2 stroke-1 text-emerald-200" />
                     <p className="font-bold text-slate-700">No customer records found</p>
                     <p className="text-[11px] mt-0.5">Try adjusting your search terms or register a new customer.</p>
@@ -320,6 +321,18 @@ function CustomerContent() {
                       <td className="py-3.5 px-4">
                         <p className="font-bold text-slate-800">{cust.programDuration}</p>
                         <p className="text-[10px] text-slate-400 truncate max-w-[140px] font-medium">{cust.currentProgram}</p>
+                      </td>
+
+                      {/* Extra Nutrition */}
+                      <td className="py-3.5 px-4">
+                        {cust.extraNutrition ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs">
+                            <Sparkles className="w-3 h-3 text-gold-600 shrink-0" />
+                            <span className="truncate max-w-[130px]" title={cust.extraNutrition}>{cust.extraNutrition}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-medium">—</span>
+                        )}
                       </td>
 
                       {/* Shakes Balance Meter */}

@@ -90,10 +90,16 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                   {customer.customerType}
                 </Badge>
               </div>
-              <p className="text-xs text-brand-100/90 flex items-center gap-3 font-medium">
+              <p className="text-xs text-brand-100/90 flex items-center gap-3 font-medium flex-wrap">
                 <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-gold-300" /> {customer.phone}</span>
                 <span>•</span>
                 <span>{customer.gender}, {customer.age} yrs</span>
+                {customer.occupation && (
+                  <>
+                    <span>•</span>
+                    <span className="text-gold-300 font-semibold">{customer.occupation}</span>
+                  </>
+                )}
                 <span>•</span>
                 <span className="text-gold-200">{customer.branch}</span>
               </p>
@@ -281,6 +287,13 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
               <div>
                 <p className="text-slate-500 font-medium">Counselor / Coach:</p>
                 <p className="font-bold text-slate-900">{customer.counselingBy}</p>
+              </div>
+              <div>
+                <p className="text-slate-500 font-medium">Extra Nutrition / Supplements:</p>
+                <p className="font-bold text-amber-900 bg-amber-50 p-2.5 rounded-xl border border-amber-200/80 mt-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-gold-600 shrink-0" />
+                  <span>{customer.extraNutrition || 'None recorded'}</span>
+                </p>
               </div>
               <div>
                 <p className="text-slate-500 font-medium">Medical Notes / Preferences:</p>

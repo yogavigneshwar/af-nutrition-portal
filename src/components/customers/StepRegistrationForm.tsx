@@ -29,7 +29,7 @@ export const StepRegistrationForm: React.FC = () => {
     // Step 1
     fullName: '',
     phone: '',
-    email: '',
+    occupation: '',
     gender: 'Male' as 'Male' | 'Female' | 'Other',
     age: 28,
     address: '',
@@ -120,7 +120,7 @@ export const StepRegistrationForm: React.FC = () => {
         {
           fullName: formData.fullName,
           phone: formData.phone,
-          email: formData.email,
+          occupation: formData.occupation,
           gender: formData.gender,
           age: Number(formData.age),
           address: formData.address,
@@ -251,13 +251,13 @@ export const StepRegistrationForm: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Email Address
+                  Occupation
                 </label>
                 <input
-                  type="email"
-                  placeholder="e.g. ramesh.k@gmail.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  type="text"
+                  placeholder="e.g. Software Engineer, Business, Teacher, Homemaker"
+                  value={formData.occupation}
+                  onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 bg-emerald-50/20 text-xs text-slate-900 focus:ring-2 focus:ring-brand-500/20"
                 />
               </div>
@@ -636,7 +636,7 @@ export const StepRegistrationForm: React.FC = () => {
               <span>Step 4: Payment Receipt & Initial Invoice Configuration</span>
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Total Plan Amount
@@ -667,22 +667,6 @@ export const StepRegistrationForm: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Payment Mode *
-                </label>
-                <select
-                  value={formData.paymentMethod}
-                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as any })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs font-bold text-slate-900 bg-white"
-                >
-                  <option value="UPI">UPI / Google Pay / PhonePe / Paytm</option>
-                  <option value="Cash">Cash at Counter</option>
-                  <option value="Card">Credit / Debit Card</option>
-                  <option value="Bank Transfer">Direct Bank Transfer / NEFT</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Balance Outstanding
                 </label>
                 <div className={`p-3 rounded-xl font-black text-sm border ${
@@ -692,13 +676,13 @@ export const StepRegistrationForm: React.FC = () => {
                 </div>
               </div>
 
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-3">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Billing Notes / Transaction Reference
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. UPI Ref: 334981729012 - HDFC Bank"
+                  placeholder="e.g. Paid at reception / Reference note"
                   value={formData.paymentNotes}
                   onChange={(e) => setFormData({ ...formData, paymentNotes: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs text-slate-900"
@@ -720,7 +704,9 @@ export const StepRegistrationForm: React.FC = () => {
               <div className="flex items-center justify-between border-b border-emerald-100 pb-3">
                 <div>
                   <h4 className="text-base font-black text-slate-900">{formData.fullName}</h4>
-                  <p className="text-slate-500 font-medium">{formData.phone} • {formData.gender}, {formData.age} yrs • {formData.branch}</p>
+                  <p className="text-slate-500 font-medium">
+                    {formData.phone} • {formData.gender}, {formData.age} yrs {formData.occupation ? `• ${formData.occupation}` : ''} • {formData.branch}
+                  </p>
                 </div>
                 <span className="px-3.5 py-1 rounded-full text-xs font-black bg-gradient-to-r from-forest-900 to-brand-800 text-gold-300 shadow-sm border border-brand-700/50">
                   {formData.customerType}
@@ -741,8 +727,8 @@ export const StepRegistrationForm: React.FC = () => {
                   <p className="font-black text-gold-900">{formatCurrency(calculatedTotalCost)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 font-medium">Payment Status:</p>
-                  <p className="font-bold text-emerald-700">{formData.paymentMethod} ({formatCurrency(formData.amountPaid)})</p>
+                  <p className="text-slate-500 font-medium">Payment Received:</p>
+                  <p className="font-bold text-emerald-700">{formatCurrency(formData.amountPaid)} Paid</p>
                 </div>
               </div>
 

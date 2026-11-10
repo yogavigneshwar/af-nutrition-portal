@@ -20,12 +20,14 @@ export interface Customer {
   fullName: string;
   phone: string;
   email?: string;
+  occupation?: string;
   gender: 'Male' | 'Female' | 'Other';
   age: number;
   dob?: string;
   address?: string;
   emergencyContact?: string;
   branch: string;
+  extraNutrition?: string;
   
   // Referral & Counseling
   inviterType: 'Friend/Family' | 'Walk-in' | 'Digital/Social Media' | 'Coach' | 'Member';

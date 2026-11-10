@@ -36,7 +36,7 @@ interface AppContextType {
   // Customer Actions
   addCustomer: (data: Partial<Customer>, paymentInfo: { amountPaid: number; paymentMethod: PaymentMethod; notes?: string }) => Customer;
   deleteCustomer: (customerId: string) => void;
-  renewCustomer: (customerId: string, duration: ProgramDuration, customDays?: number, pricePerDay?: number, amountPaid?: number, paymentMethod?: PaymentMethod) => void;
+  renewCustomer: (customerId: string, duration: ProgramDuration, customDays?: number, pricePerDay?: number, amountPaid?: number, paymentMethod?: PaymentMethod, extraNutrition?: string) => void;
   updateCustomer: (customerId: string, updates: Partial<Customer>) => void;
   promoteCustomerToAssociate: (customerId: string, notes?: string) => Customer | undefined;
   getCustomerById: (id: string) => Customer | undefined;
@@ -264,11 +264,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       fullName: data.fullName || 'Unknown Customer',
       phone: data.phone || '',
       email: data.email || '',
+      occupation: data.occupation || '',
       gender: data.gender || 'Male',
       age: data.age || 30,
       address: data.address || '',
       emergencyContact: data.emergencyContact || '',
       branch: data.branch || selectedBranch,
+      extraNutrition: data.extraNutrition || '',
       inviterType: data.inviterType || 'Walk-in',
       inviterName: data.inviterName || '',
       inviterContact: data.inviterContact || '',
@@ -348,7 +350,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     customDays?: number, 
     pricePerDay = 150, 
     amountPaid = 0, 
-    paymentMethod: PaymentMethod = 'UPI'
+    paymentMethod: PaymentMethod = 'UPI',
+    extraNutrition?: string
   ) => {
     const cust = customers.find(c => c.id === customerId);
     if (!cust) return;
@@ -383,6 +386,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           paymentMethod: paymentMethod,
           status: 'Active',
           customerType: 'Existing Customer',
+          extraNutrition: extraNutrition !== undefined ? extraNutrition : c.extraNutrition,
           totalSpent: c.totalSpent + amountPaid,
           updatedAt: new Date().toISOString(),
         };
