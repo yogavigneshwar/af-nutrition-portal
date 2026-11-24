@@ -22,6 +22,7 @@ function BillingContent() {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoiceModalMode, setInvoiceModalMode] = useState<'standard' | 'thermal'>('standard');
 
   // Settlement Modal State
   const [settlingInvoice, setSettlingInvoice] = useState<Invoice | null>(null);
@@ -82,8 +83,9 @@ function BillingContent() {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
-  const handleOpenInvoice = (inv: any) => {
+  const handleOpenInvoice = (inv: any, mode: 'standard' | 'thermal' = 'standard') => {
     setSelectedInvoice(inv);
+    setInvoiceModalMode(mode);
     setShowInvoiceModal(true);
   };
 
@@ -343,12 +345,23 @@ function BillingContent() {
                           {/* Print Receipt Button */}
                           <button
                             type="button"
-                            onClick={() => handleOpenInvoice(inv)}
+                            onClick={() => handleOpenInvoice(inv, 'standard')}
                             className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs inline-flex items-center gap-1 transition-colors border border-emerald-200/60 cursor-pointer"
-                            title="View receipt"
+                            title="View standard A4 invoice"
                           >
                             <Printer className="w-3.5 h-3.5" />
-                            <span>Receipt</span>
+                            <span>Invoice</span>
+                          </button>
+
+                          {/* Thermal Paper Slip Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenInvoice(inv, 'thermal')}
+                            className="px-2.5 py-1.5 rounded-xl bg-gold-50 hover:bg-gold-100 text-amber-900 font-bold text-xs inline-flex items-center gap-1 transition-colors border border-gold-300/60 cursor-pointer"
+                            title="View and print 80mm thermal counter slip"
+                          >
+                            <Receipt className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Thermal</span>
                           </button>
                         </div>
                       </td>
@@ -474,6 +487,7 @@ function BillingContent() {
       <InvoiceModal
         isOpen={showInvoiceModal}
         invoice={selectedInvoice}
+        initialMode={invoiceModalMode}
         onClose={() => setShowInvoiceModal(false)}
       />
     </div>

@@ -765,6 +765,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const cust = customers.find(c => c.id === customerId);
     if (!cust) return null;
 
+    // Strict 1-Shake-per-day enforcement for JP Members
+    if (cust.customerType === 'JP Member') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const alreadyDrankToday = shakeLogs.some(log => log.customerId === cust.id && log.date === todayStr);
+      if (alreadyDrankToday) {
+        if (typeof window !== 'undefined') {
+          window.alert('JP Member Daily Limit: Strictly 1 shake per day is permitted for JP Members. Today\'s quota has already been consumed.');
+        }
+        return null;
+      }
+    }
+
     const prevBal = cust.remainingShakes;
     const newBal = Math.max(0, prevBal - shakeCount);
     const now = new Date();
@@ -996,8 +1008,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const totalCustomers = customers.length;
     const newCustomersCount = customers.filter(c => c.customerType === 'New Customer').length;
     const existingProfilesCount = customers.filter(c => c.customerType === 'Existing Customer').length;
-    const associatesCount = customers.filter(c => c.customerType === 'Associate' || c.customerType === 'JP Member').length;
-    const jpMembersCount = associatesCount;
+    const associatesCount = customers.filter(c => c.customerType === 'Associate').length;
+    const jpMembersCount = customers.filter(c => c.customerType === 'JP Member').length;
     const preferredCustomersCount = customers.filter(c => c.customerType === 'Preferred Customer').length;
 
     // Shake activity today

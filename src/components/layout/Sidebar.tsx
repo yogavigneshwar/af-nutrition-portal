@@ -51,6 +51,7 @@ export const Sidebar: React.FC = () => {
       title: 'Customer Lifecycle',
       items: [
         { name: 'Customer Registry', href: '/customers', icon: Users, count: metrics.totalCustomers },
+        { name: 'JP Members Club', href: '/customers/jp-members', icon: Sparkles, count: metrics.jpMembersCount > 0 ? metrics.jpMembersCount : undefined, countColor: 'bg-gold-500 text-slate-950 font-black', badge: '30-Day' },
         { name: 'Customer Registration', href: '/customers/register', icon: UserPlus, badge: '5-Step' },
         { name: 'Associate Registry', href: '/associates', icon: Award, count: metrics.associatesCount, countColor: 'bg-gold-500 text-slate-950 font-black', badge: 'Partners' },
         { name: 'Existing Renewal', href: '/customers/reactivate', icon: UserCheck },
@@ -60,6 +61,7 @@ export const Sidebar: React.FC = () => {
       title: 'Daily Tracking & Wellness',
       items: [
         { name: 'Daily Shake Intake', href: '/shakes', icon: Coffee, badge: 'Live Tracker' },
+        { name: 'Daily KPI Report', href: '/daily-kpi', icon: CalendarCheck, badge: 'Calendar' },
       ]
     },
     {
