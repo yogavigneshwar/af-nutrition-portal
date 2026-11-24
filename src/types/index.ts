@@ -100,10 +100,22 @@ export interface Product {
 
 export type OrderStatus = 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED';
 
+export interface BillPerson {
+  id: string;
+  name: string;
+  isMember: boolean;
+  customerId?: string;
+  phone?: string;
+}
+
 export interface CartItem {
+  id?: string;
   product: Product;
   quantity: number;
   customNotes?: string;
+  assignedPersonName?: string;
+  isMember?: boolean;
+  memberCustomerId?: string;
 }
 
 export interface OrderItem {
@@ -114,6 +126,7 @@ export interface OrderItem {
   quantity: number;
   subtotal: number;
   notes?: string;
+  assignedPersonName?: string;
 }
 
 export interface Order {
@@ -182,6 +195,7 @@ export interface Invoice {
     quantity: number;
     unitPrice: number;
     total: number;
+    assignedPersonName?: string;
   }[];
   subtotal: number;
   tax: number;

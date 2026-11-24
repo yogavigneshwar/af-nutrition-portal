@@ -133,7 +133,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ invoice, isOpen, onC
             </div>
             <div className="flex justify-between text-slate-600 pt-1">
               <span>Amount Paid:</span>
-              <span className="font-bold text-emerald-700">{formatCurrency(grandTotal)}</span>
+              <span className="font-bold text-emerald-700">{formatCurrency(invoice.amountPaid !== undefined ? invoice.amountPaid : grandTotal)}</span>
             </div>
             {invoice.balanceDue > 0 && (
               <div className="flex justify-between text-rose-600 font-bold">

@@ -100,15 +100,13 @@ export default function ShakesPage() {
                 <th className="py-3.5 px-4">Flavor / Recipe</th>
                 <th className="py-3.5 px-4 text-center">Shake Qty</th>
                 <th className="py-3.5 px-4 text-center">Balance Change</th>
-                <th className="py-3.5 px-4">Staff / Coach</th>
-                <th className="py-3.5 px-4">Coach Notes</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     <Coffee className="w-10 h-10 mx-auto mb-2 stroke-1 text-emerald-200" />
                     <p className="font-bold text-slate-700">No shake intake logs found</p>
                   </td>
@@ -138,12 +136,6 @@ export default function ShakesPage() {
                       <span className="text-slate-400">{log.previousBalance}</span>
                       <span className="mx-1 text-slate-300">→</span>
                       <span className="font-black text-emerald-700">{log.newBalance} left</span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium">
-                      {log.staffName}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-500 italic max-w-[200px] truncate">
-                      {log.notes || '-'}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <button

@@ -7,7 +7,7 @@ import {
   Calendar, Coffee, CheckCircle, Sparkles, AlertCircle 
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { ProgramDuration, PaymentMethod } from '../../../types';
+import { ProgramDuration } from '../../../types';
 import { calculateProgramDays, calculateTotalPlanCost, formatCurrency, formatDate } from '../../../lib/utils';
 import { InvoiceModal } from '../../../components/common/InvoiceModal';
 
@@ -22,8 +22,6 @@ function ReactivateContent() {
   const [customDays, setCustomDays] = useState(30);
   const [planCost, setPlanCost] = useState(4500);
   const [amountPaid, setAmountPaid] = useState(4500);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
-  const [extraNutrition, setExtraNutrition] = useState('');
   const [notes, setNotes] = useState('');
 
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -36,12 +34,6 @@ function ReactivateContent() {
   }, [preSelectedId]);
 
   const customer = customers.find(c => c.id === selectedCustomerId) || null;
-
-  useEffect(() => {
-    if (customer) {
-      setExtraNutrition(customer.extraNutrition || '');
-    }
-  }, [customer]);
 
   const addedDays = calculateProgramDays(duration, customDays);
   const totalCost = planCost;
@@ -64,7 +56,7 @@ function ReactivateContent() {
     }
 
     const dailyRate = addedDays > 0 ? Math.round(planCost / addedDays) : 150;
-    renewCustomer(customer.id, duration, customDays, dailyRate, amountPaid, paymentMethod, extraNutrition);
+    renewCustomer(customer.id, duration, customDays, dailyRate, amountPaid, 'UPI');
     const latestInv = invoices[0];
     setGeneratedInvoice(latestInv);
     setShowInvoiceModal(true);
@@ -133,14 +125,10 @@ function ReactivateContent() {
               </span>
             </div>
 
-            <div className="relative z-10 grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+            <div className="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
                 <p className="text-[10px] uppercase text-gold-400 font-bold">Current Program</p>
                 <p className="font-bold text-white mt-0.5 truncate">{customer.currentProgram}</p>
-              </div>
-              <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
-                <p className="text-[10px] uppercase text-gold-400 font-bold">Extra Nutrition</p>
-                <p className="font-bold text-gold-300 mt-0.5 truncate">{customer.extraNutrition || 'None'}</p>
               </div>
               <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
                 <p className="text-[10px] uppercase text-gold-400 font-bold">Shakes Consumed</p>
@@ -248,9 +236,20 @@ function ReactivateContent() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Amount Paid Now (₹) *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Amount Paid Now (₹) *
+              </label>
+              {totalCost > 0 && amountPaid !== totalCost && (
+                <button
+                  type="button"
+                  onClick={() => setAmountPaid(totalCost)}
+                  className="text-[10px] font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 px-2 py-0.5 rounded-md border border-brand-200 transition-colors cursor-pointer"
+                >
+                  Pay Full
+                </button>
+              )}
+            </div>
             <input
               type="number"
               value={amountPaid === 0 ? '' : amountPaid}
@@ -267,22 +266,6 @@ function ReactivateContent() {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Payment Method *
-            </label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value as any)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs font-semibold text-slate-900 bg-white"
-            >
-              <option value="UPI">UPI / Google Pay / PhonePe</option>
-              <option value="Cash">Cash at Counter</option>
-              <option value="Card">Credit / Debit Card</option>
-              <option value="Bank Transfer">Bank Transfer / NEFT</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
               Balance Due
             </label>
             <div className={`p-2.5 rounded-xl text-xs font-black border ${
@@ -290,24 +273,6 @@ function ReactivateContent() {
             }`}>
               {balanceDue > 0 ? formatCurrency(balanceDue) : 'Rs. 0 (Fully Paid)'}
             </div>
-          </div>
-
-          <div className="sm:col-span-2">
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Extra Nutrition / Supplements
-              </label>
-              <span className="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md border border-brand-200">
-                Editable
-              </span>
-            </div>
-            <input
-              type="text"
-              placeholder="e.g. Personalized Protein Powder (PPP), Multivitamin, Afresh, Cell Activator"
-              value={extraNutrition}
-              onChange={(e) => setExtraNutrition(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-brand-500/20"
-            />
           </div>
 
           <div className="sm:col-span-2">

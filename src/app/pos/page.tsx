@@ -4,10 +4,10 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
   Search, ShoppingBag, Filter, Sparkles, 
-  UtensilsCrossed, Coffee, Zap, Layers 
+  UtensilsCrossed, Coffee, Zap, Layers, Users 
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { ProductCategory, Product, Customer } from '../../types';
+import { ProductCategory, Product, Customer, BillPerson } from '../../types';
 import { ProductCard } from '../../components/pos/ProductCard';
 import { CartDrawer } from '../../components/pos/CartDrawer';
 
@@ -18,21 +18,27 @@ function PosContent() {
   const { products, customers, addToCart } = useApp();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [isWalkIn, setIsWalkIn] = useState(false);
-  const [walkInName, setWalkInName] = useState('');
+
+  // Multi-person bill state
+  const [billPersons, setBillPersons] = useState<BillPerson[]>([
+    { id: 'p-1', name: 'Walk-in Guest', isMember: false }
+  ]);
+  const [activePersonId, setActivePersonId] = useState<string>('p-1');
 
   // Handle URL param customer pre-selection
   useEffect(() => {
     if (preCustomerId) {
       const cust = customers.find(c => c.id === preCustomerId);
       if (cust) {
-        setSelectedCustomer(cust);
-        setIsWalkIn(false);
+        setBillPersons([
+          { id: 'p-1', name: cust.fullName, isMember: true, customerId: cust.id, phone: cust.phone }
+        ]);
+        setActivePersonId('p-1');
       }
     }
   }, [preCustomerId, customers]);
 
+  const activePerson = billPersons.find(p => p.id === activePersonId) || billPersons[0];
   const categories = ['All', 'Combos', 'Shakes', 'Energy Teas', 'Add-ons', 'Protein Snacks'];
 
   // Filter products by category and search term
@@ -48,6 +54,37 @@ function PosContent() {
     <div className="flex flex-col xl:flex-row gap-6 h-[calc(100vh-100px)]">
       {/* Left Menu & Catalog Column */}
       <div className="flex-1 flex flex-col min-w-0 space-y-4 overflow-hidden">
+        {/* Active Person Context Header Banner */}
+        <div className="bg-gradient-to-r from-forest-950 via-forest-900 to-[#032017] p-3.5 px-5 rounded-3xl border border-brand-700/40 text-white flex items-center justify-between shadow-sm shrink-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 rounded-xl bg-gold-500/20 text-gold-300 border border-gold-400/40 flex items-center justify-center font-black text-xs">
+              <Users className="w-4 h-4 text-gold-400" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold text-gold-300 tracking-wider">
+                Ordering Drink / Item For:
+              </p>
+              <h4 className="text-sm font-black text-white flex items-center gap-2">
+                <span>{activePerson.name}</span>
+                {activePerson.isMember ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    Active Member (₹0 Plan Quota)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-300 border border-slate-600/40">
+                    Retail Guest
+                  </span>
+                )}
+              </h4>
+            </div>
+          </div>
+          <div className="text-right text-xs hidden sm:block">
+            <span className="text-[11px] text-brand-200/80 font-medium bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+              Single Bill • {billPersons.length} Person{billPersons.length > 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
+
         {/* Top Filter Bar */}
         <div className="bg-white rounded-3xl p-4 border border-emerald-100/80 shadow-sm space-y-3 shrink-0">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
@@ -101,7 +138,16 @@ function PosContent() {
                 <ProductCard
                   key={prod.id}
                   product={prod}
-                  onAddToCart={(p) => addToCart(p, 1)}
+                  onAddToCart={(p) => {
+                    addToCart(
+                      p, 
+                      1, 
+                      '', 
+                      activePerson.name, 
+                      activePerson.isMember, 
+                      activePerson.customerId
+                    );
+                  }}
                 />
               ))}
             </div>
@@ -112,12 +158,10 @@ function PosContent() {
       {/* Right Cart & Checkout Drawer Column */}
       <div className="w-full xl:w-96 shrink-0 h-full">
         <CartDrawer
-          selectedCustomer={selectedCustomer}
-          onSelectCustomer={setSelectedCustomer}
-          isWalkIn={isWalkIn}
-          setIsWalkIn={setIsWalkIn}
-          walkInName={walkInName}
-          setWalkInName={setWalkInName}
+          billPersons={billPersons}
+          setBillPersons={setBillPersons}
+          activePersonId={activePersonId}
+          setActivePersonId={setActivePersonId}
         />
       </div>
     </div>

@@ -42,19 +42,21 @@ interface AppContextType {
   getCustomerById: (id: string) => Customer | undefined;
 
   // POS & Cart Actions
-  addToCart: (product: Product, quantity?: number, notes?: string) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, quantity?: number, notes?: string, assignedPersonName?: string, isMember?: boolean, memberCustomerId?: string) => void;
+  removeFromCart: (itemIdOrProductId: string) => void;
+  updateCartQuantity: (itemIdOrProductId: string, quantity: number) => void;
   clearCart: () => void;
   createOrder: (orderInfo: {
     customerId: string;
     customerName: string;
     customerPhone?: string;
     isWalkIn: boolean;
-    paymentMethod: PaymentMethod;
+    paymentMethod?: PaymentMethod;
+    paymentStatus?: PaymentStatus;
     discount?: number;
     remarks?: string;
   }) => Order;
+  settleInvoicePayment: (invoiceId: string, amountToPay?: number) => void;
 
   // Kitchen & Order Actions
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -462,30 +464,51 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const getCustomerById = (id: string) => customers.find(c => c.id === id);
 
   // Cart & POS
-  const addToCart = (product: Product, quantity = 1, notes = '') => {
+  const addToCart = (
+    product: Product, 
+    quantity = 1, 
+    notes = '', 
+    assignedPersonName = '', 
+    isMember = false, 
+    memberCustomerId = ''
+  ) => {
     setCart(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
-      if (existing) {
-        return prev.map(item => 
-          item.product.id === product.id 
+      const matchIndex = prev.findIndex(item => 
+        item.product.id === product.id && 
+        (item.assignedPersonName || '') === (assignedPersonName || '')
+      );
+      if (matchIndex > -1) {
+        return prev.map((item, idx) => 
+          idx === matchIndex 
             ? { ...item, quantity: item.quantity + quantity, customNotes: notes || item.customNotes }
             : item
         );
       }
-      return [...prev, { product, quantity, customNotes: notes }];
+      return [
+        ...prev, 
+        { 
+          id: `${product.id}-${assignedPersonName || 'guest'}-${Date.now()}`,
+          product, 
+          quantity, 
+          customNotes: notes,
+          assignedPersonName,
+          isMember,
+          memberCustomerId
+        }
+      ];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product.id !== productId));
+  const removeFromCart = (itemIdOrProductId: string) => {
+    setCart(prev => prev.filter(item => item.id !== itemIdOrProductId && item.product.id !== itemIdOrProductId));
   };
 
-  const updateCartQuantity = (productId: string, quantity: number) => {
+  const updateCartQuantity = (itemIdOrProductId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(itemIdOrProductId);
       return;
     }
-    setCart(prev => prev.map(item => item.product.id === productId ? { ...item, quantity } : item));
+    setCart(prev => prev.map(item => (item.id === itemIdOrProductId || item.product.id === itemIdOrProductId) ? { ...item, quantity } : item));
   };
 
   const clearCart = () => setCart([]);
@@ -495,18 +518,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     customerName: string;
     customerPhone?: string;
     isWalkIn: boolean;
-    paymentMethod: PaymentMethod;
+    paymentMethod?: PaymentMethod;
+    paymentStatus?: PaymentStatus;
     discount?: number;
     remarks?: string;
   }): Order => {
-    const isMember = !orderInfo.isWalkIn && !!orderInfo.customerId && orderInfo.customerId !== 'WALK-IN';
+    const isPrimaryMember = !orderInfo.isWalkIn && !!orderInfo.customerId && orderInfo.customerId !== 'WALK-IN';
     
     // For members, standard shakes are covered under their membership plan (0 chargeable)
     const orderItems = cart.map(item => {
-      const isCoveredShake = isMember && item.product.category === 'Shakes';
+      const isItemMember = item.isMember !== undefined ? item.isMember : isPrimaryMember;
+      const isCoveredShake = isItemMember && item.product.category === 'Shakes';
       const effectivePrice = isCoveredShake ? 0 : item.product.price;
       const itemSubtotal = effectivePrice * item.quantity;
-      const displayName = isCoveredShake ? `${item.product.name} (Plan Quota)` : item.product.name;
+      const tagPrefix = item.assignedPersonName ? `[${item.assignedPersonName}] ` : '';
+      const quotaTag = isCoveredShake ? ' (Plan Quota)' : '';
+      const displayName = `${tagPrefix}${item.product.name}${quotaTag}`;
 
       return {
         productId: item.product.id,
@@ -516,6 +543,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         quantity: item.quantity,
         subtotal: itemSubtotal,
         notes: item.customNotes,
+        assignedPersonName: item.assignedPersonName,
       };
     });
 
@@ -524,6 +552,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const discount = orderInfo.discount || 0;
     const total = Math.max(0, subtotal - discount);
     
+    // If total > 0 (add-ons or retail items), paymentStatus defaults to 'Pending' ("Need to Pay")
+    // If total === 0 (all plan quota shakes), status is 'Paid'
+    const paymentStatus: PaymentStatus = orderInfo.paymentStatus || (total > 0 ? 'Pending' : 'Paid');
+    const amountPaid = paymentStatus === 'Paid' ? total : 0;
+    const balanceDue = Math.max(0, total - amountPaid);
+    const paymentMethod: PaymentMethod = orderInfo.paymentMethod || 'UPI';
+
     // Determine next token number
     const maxToken = orders.reduce((max, o) => Math.max(max, o.tokenNumber || 100), 100);
     const tokenNumber = maxToken >= 999 ? 101 : maxToken + 1;
@@ -541,8 +576,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       tax: 0,
       discount: discount,
       total: total,
-      paymentMethod: orderInfo.paymentMethod,
-      paymentStatus: 'Paid',
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentStatus,
       orderStatus: 'PENDING',
       branch: selectedBranch,
       staffName: currentUser.name,
@@ -553,10 +588,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Deduct stock for all purchased items
     setProducts(prev => prev.map(p => {
-      const cartItem = cart.find(ci => ci.product.id === p.id);
-      if (cartItem) {
-        const newStock = Math.max(0, p.stock - cartItem.quantity);
-        return { ...p, stock: newStock };
+      const purchasedQty = cart
+        .filter(ci => ci.product.id === p.id)
+        .reduce((sum, ci) => sum + ci.quantity, 0);
+      if (purchasedQty > 0) {
+        return { ...p, stock: Math.max(0, p.stock - purchasedQty) };
       }
       return p;
     }));
@@ -575,70 +611,75 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         quantity: item.quantity,
         unitPrice: item.price,
         total: item.subtotal,
+        assignedPersonName: item.assignedPersonName,
       })),
       subtotal: subtotal,
       tax: 0,
       discount: discount,
       total: total,
-      amountPaid: total,
-      balanceDue: 0,
-      paymentMethod: orderInfo.paymentMethod,
-      paymentStatus: 'Paid',
+      amountPaid: amountPaid,
+      balanceDue: balanceDue,
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentStatus,
       date: new Date().toISOString().split('T')[0],
       branch: selectedBranch,
       staffName: currentUser.name,
       notes: orderInfo.remarks,
     };
 
-    // Update customer stats if registered customer (and deduct shake count if shake was in cart)
-    if (isMember) {
-      const shakeCountInOrder = cart
-        .filter(ci => ci.product.category === 'Shakes')
-        .reduce((sum, ci) => sum + ci.quantity, 0);
+    // Deduct shakes for registered members on this order
+    const memberShakeDeductions: Record<string, number> = {};
+    cart.forEach(ci => {
+      if (ci.product.category === 'Shakes') {
+        const targetId = ci.memberCustomerId || (isPrimaryMember ? orderInfo.customerId : null);
+        if (targetId) {
+          memberShakeDeductions[targetId] = (memberShakeDeductions[targetId] || 0) + ci.quantity;
+        }
+      }
+    });
 
+    if (Object.keys(memberShakeDeductions).length > 0) {
       setCustomers(prev => prev.map(c => {
-        if (c.id === orderInfo.customerId) {
-          const newRemaining = shakeCountInOrder > 0 ? Math.max(0, c.remainingShakes - shakeCountInOrder) : c.remainingShakes;
-          const newConsumed = shakeCountInOrder > 0 ? c.consumedShakes + shakeCountInOrder : c.consumedShakes;
-          const newVisits = shakeCountInOrder > 0 ? c.clubVisitsCount + 1 : c.clubVisitsCount;
-
+        const deduction = memberShakeDeductions[c.id];
+        if (deduction) {
           return {
             ...c,
-            remainingShakes: newRemaining,
-            consumedShakes: newConsumed,
-            clubVisitsCount: newVisits,
+            remainingShakes: Math.max(0, c.remainingShakes - deduction),
+            consumedShakes: c.consumedShakes + deduction,
+            clubVisitsCount: c.clubVisitsCount + 1,
             totalOrdersCount: c.totalOrdersCount + 1,
-            totalSpent: c.totalSpent + total,
+            totalSpent: c.totalSpent + (paymentStatus === 'Paid' ? total : 0),
             updatedAt: new Date().toISOString(),
           };
         }
         return c;
       }));
 
-      // If shake was ordered, also automatically log the shake visit
-      if (shakeCountInOrder > 0) {
-        const shakeItem = cart.find(ci => ci.product.category === 'Shakes');
+      // Automatically log the shake visit for registered members who ordered shakes
+      Object.entries(memberShakeDeductions).forEach(([memberId, shakeCount]) => {
+        const member = customers.find(c => c.id === memberId);
+        const shakeItem = cart.find(ci => ci.product.category === 'Shakes' && (ci.memberCustomerId === memberId || (!ci.memberCustomerId && memberId === orderInfo.customerId)));
         const flavor = shakeItem ? shakeItem.product.name : 'Daily Shake';
         const now = new Date();
         const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
         
         const autoShakeLog: ShakeIntakeLog = {
-          id: `SHK-POS-${Date.now()}`,
-          customerId: orderInfo.customerId,
-          customerName: orderInfo.customerName,
-          customerPhone: orderInfo.customerPhone || '',
+          id: `SHK-POS-${Date.now()}-${memberId}`,
+          customerId: memberId,
+          customerName: member?.fullName || orderInfo.customerName,
+          customerPhone: member?.phone || orderInfo.customerPhone || '',
           date: now.toISOString().split('T')[0],
           time: timeStr,
-          shakeCount: shakeCountInOrder,
+          shakeCount: shakeCount,
           flavorCombo: flavor,
-          notes: `POS order #${orderId} (Plan Quota)`,
+          notes: `POS order #${newOrder.id} (Plan Quota)`,
           staffName: currentUser.name,
-          previousBalance: customers.find(c => c.id === orderInfo.customerId)?.remainingShakes || 0,
-          newBalance: Math.max(0, (customers.find(c => c.id === orderInfo.customerId)?.remainingShakes || 0) - shakeCountInOrder),
+          previousBalance: member?.remainingShakes || 0,
+          newBalance: Math.max(0, (member?.remainingShakes || 0) - shakeCount),
           createdAt: now.toISOString(),
         };
         setShakeLogs(prev => [autoShakeLog, ...prev]);
-      }
+      });
     }
 
     setOrders(prev => [newOrder, ...prev]);
@@ -646,6 +687,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     clearCart();
 
     return newOrder;
+  };
+
+  const settleInvoicePayment = (invoiceId: string, amountToPay?: number) => {
+    let affectedCustomerId: string | null = null;
+    let settledAmount = 0;
+
+    setInvoices(prev => prev.map(inv => {
+      if (inv.id === invoiceId) {
+        affectedCustomerId = inv.customerId;
+        settledAmount = amountToPay !== undefined ? amountToPay : (inv.balanceDue > 0 ? inv.balanceDue : inv.total);
+        const newPaid = Math.min(inv.total, (inv.amountPaid || 0) + settledAmount);
+        const newBalance = Math.max(0, inv.total - newPaid);
+        return {
+          ...inv,
+          amountPaid: newPaid,
+          balanceDue: newBalance,
+          paymentStatus: newBalance === 0 ? 'Paid' : 'Partial',
+        };
+      }
+      return inv;
+    }));
+
+    // Update associated order if POS order
+    setOrders(prev => prev.map(o => {
+      if (o.id === invoiceId.replace('INV-', '')) {
+        return { ...o, paymentStatus: 'Paid' };
+      }
+      return o;
+    }));
+
+    // Update customer balance if registered customer
+    if (affectedCustomerId && affectedCustomerId !== 'WALK-IN') {
+      setCustomers(prev => prev.map(c => {
+        if (c.id === affectedCustomerId) {
+          const newBal = Math.max(0, (c.balanceDue || 0) - settledAmount);
+          const newSpent = c.totalSpent + settledAmount;
+          return {
+            ...c,
+            balanceDue: newBal,
+            totalSpent: newSpent,
+            paymentStatus: newBal === 0 ? 'Paid' : 'Partial',
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return c;
+      }));
+    }
   };
 
   // Kitchen Status Transitions
@@ -991,6 +1079,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateCartQuantity,
         clearCart,
         createOrder,
+        settleInvoicePayment,
         updateOrderStatus,
         getOrderById,
         logDailyShakeIntake,

@@ -31,7 +31,7 @@ export const StepRegistrationForm: React.FC = () => {
     phone: '',
     occupation: '',
     gender: 'Male' as 'Male' | 'Female' | 'Other',
-    age: 28,
+    age: 0,
     address: '',
     emergencyContact: '',
     branch: selectedBranch,
@@ -40,8 +40,8 @@ export const StepRegistrationForm: React.FC = () => {
     inviterType: 'Walk-in' as 'Friend/Family' | 'Walk-in' | 'Digital/Social Media' | 'Coach' | 'Member',
     inviterName: '',
     inviterContact: '',
-    counselingBy: currentUser.name,
-    healthGoals: ['Weight Loss', 'Energy Boost'] as string[],
+    counselingBy: '',
+    healthGoals: [] as string[],
     medicalNotes: '',
 
     // Step 3
@@ -55,9 +55,9 @@ export const StepRegistrationForm: React.FC = () => {
     remarks: '',
 
     // Step 4
-    amountPaid: 4500,
+    amountPaid: 0,
     paymentMethod: 'UPI' as PaymentMethod,
-    paymentNotes: 'Full payment received at registration',
+    paymentNotes: '',
   });
 
   const availableGoals = [
@@ -289,7 +289,7 @@ export const StepRegistrationForm: React.FC = () => {
                       const val = e.target.value;
                       setFormData({ ...formData, age: val === '' ? 0 : parseInt(val, 10) || 0 });
                     }}
-                    placeholder="25"
+                    placeholder="Age (e.g. 28)"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 bg-emerald-50/20 text-xs text-slate-900 font-semibold"
                     min={1}
                     max={100}
@@ -347,7 +347,7 @@ export const StepRegistrationForm: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+              <div className={formData.inviterType === 'Walk-in' ? 'sm:col-span-2' : ''}>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Inviter / Referral Source *
                 </label>
@@ -362,19 +362,6 @@ export const StepRegistrationForm: React.FC = () => {
                   <option value="Member">Existing Club Member</option>
                   <option value="Coach">Wellness Coach Outreach</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Counseling Taken By (Coach) *
-                </label>
-                <input
-                  type="text"
-                  value={formData.counselingBy}
-                  onChange={(e) => setFormData({ ...formData, counselingBy: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-200/80 text-xs font-semibold text-slate-900"
-                  required
-                />
               </div>
 
               {formData.inviterType !== 'Walk-in' && (
@@ -647,9 +634,20 @@ export const StepRegistrationForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Amount Paid Now (Rs.) *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Amount Paid Now (Rs.) *
+                  </label>
+                  {calculatedTotalCost > 0 && formData.amountPaid !== calculatedTotalCost && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, amountPaid: calculatedTotalCost })}
+                      className="text-[10px] font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 px-2 py-0.5 rounded-md border border-brand-200 transition-colors cursor-pointer"
+                    >
+                      Pay Full
+                    </button>
+                  )}
+                </div>
                 <input
                   type="number"
                   value={formData.amountPaid === 0 ? '' : formData.amountPaid}
@@ -732,15 +730,9 @@ export const StepRegistrationForm: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border-t border-emerald-100 pt-3 grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-slate-500 font-medium">Counselor:</p>
-                  <p className="font-semibold text-slate-800">{formData.counselingBy}</p>
-                </div>
-                <div>
-                  <p className="text-slate-500 font-medium">Referral / Inviter:</p>
-                  <p className="font-semibold text-slate-800">{formData.inviterType} {formData.inviterName ? `(${formData.inviterName})` : ''}</p>
-                </div>
+              <div className="border-t border-emerald-100 pt-3">
+                <p className="text-slate-500 font-medium">Referral / Inviter:</p>
+                <p className="font-semibold text-slate-800">{formData.inviterType} {formData.inviterName ? `(${formData.inviterName})` : ''}</p>
               </div>
 
               {formData.remarks && (

@@ -172,41 +172,26 @@ export const ShakeLoggerModal: React.FC<ShakeLoggerModalProps> = ({
           </select>
         </div>
 
-        {/* Shake Count & Notes */}
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Quantity
-            </label>
-            <div className="flex items-center space-x-1">
-              {[1, 2].map(num => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => setShakeCount(num)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-black border transition-all ${
-                    shakeCount === num
-                      ? 'bg-forest-900 text-gold-300 border-brand-700 shadow-sm'
-                      : 'border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {num} Shake{num > 1 ? 's' : ''}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="col-span-2">
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Coach Notes / Adherence
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Adhering well, high energy today..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3.5 py-2 rounded-xl border border-emerald-200/80 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-            />
+        {/* Shake Quantity */}
+        <div>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Quantity
+          </label>
+          <div className="flex items-center space-x-2">
+            {[1, 2].map(num => (
+              <button
+                type="button"
+                key={num}
+                onClick={() => setShakeCount(num)}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-black border transition-all ${
+                  shakeCount === num
+                    ? 'bg-forest-900 text-gold-300 border-brand-700 shadow-sm'
+                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                {num} Shake{num > 1 ? 's' : ''}
+              </button>
+            ))}
           </div>
         </div>
 

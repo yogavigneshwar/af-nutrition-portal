@@ -265,8 +265,8 @@ function CustomerContent() {
                 <th className="py-3.5 px-4">Active Plan</th>
                 <th className="py-3.5 px-4">Extra Nutrition</th>
                 <th className="py-3.5 px-4">Shakes Balance</th>
-                <th className="py-3.5 px-4 text-center">Club Visits</th>
-                <th className="py-3.5 px-4">Total Spent</th>
+                <th className="py-3.5 px-4">Club Visits</th>
+                <th className="py-3.5 px-4">Paid & Balance</th>
                 <th className="py-3.5 px-4 text-right">Actions & Profile</th>
               </tr>
             </thead>
@@ -358,10 +358,23 @@ function CustomerContent() {
                         <span className="font-bold text-slate-800">{cust.clubVisitsCount} visits</span>
                       </td>
 
-                      {/* Total Spent */}
+                      {/* Paid & Balance Due */}
                       <td className="py-3.5 px-4">
                         <p className="font-black text-gold-900">{formatCurrency(cust.totalSpent)}</p>
-                        <span className="text-[10px] text-emerald-700 font-bold">{cust.paymentStatus}</span>
+                        {cust.balanceDue && cust.balanceDue > 0 ? (
+                          <Link
+                            href={`/billing?search=${cust.phone || cust.fullName}`}
+                            className="inline-flex items-center gap-1 text-[10px] font-black text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-lg mt-0.5 transition-colors"
+                            title="Click to view and settle in Billing"
+                          >
+                            <span>Bal: {formatCurrency(cust.balanceDue)}</span>
+                            <ArrowUpRight className="w-2.5 h-2.5 text-amber-600" />
+                          </Link>
+                        ) : (
+                          <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
+                            No Balance
+                          </span>
+                        )}
                       </td>
 
                       {/* Action Buttons */}

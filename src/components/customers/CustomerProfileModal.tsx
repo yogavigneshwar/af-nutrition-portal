@@ -228,16 +228,64 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
           <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
             <p className="text-[10px] uppercase font-bold text-gold-400">Total Visits</p>
             <p className="text-xs font-bold text-white mt-0.5">{customer.clubVisitsCount} Club Visits</p>
-            <p className="text-[10px] text-brand-200/70 mt-0.5">Coach: {customer.counselingBy}</p>
+            <p className="text-[10px] text-brand-200/70 mt-0.5">{customer.programDuration} Plan</p>
           </div>
 
-          <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
-            <p className="text-[10px] uppercase font-bold text-gold-400">Lifetime Revenue</p>
-            <p className="text-xs font-black text-gold-300 mt-0.5">{formatCurrency(customer.totalSpent)}</p>
-            <p className="text-[10px] text-emerald-400 font-bold mt-0.5">Status: {customer.paymentStatus}</p>
-          </div>
+          {customer.balanceDue && customer.balanceDue > 0 ? (
+            <div 
+              onClick={() => {
+                onClose();
+                router.push(`/billing?search=${customer.phone || customer.fullName}`);
+              }}
+              className="bg-forest-950/70 rounded-2xl p-3 border border-amber-400/80 hover:border-gold-300 transition-all cursor-pointer group shadow-inner"
+              title="Click to view in Billing & Settle Balance"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase font-bold text-amber-300">Balance Due</p>
+                <ArrowRight className="w-3 h-3 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+              <p className="text-sm font-black text-amber-400 mt-0.5">{formatCurrency(customer.balanceDue)}</p>
+              <p className="text-[10px] text-amber-200/80 font-medium underline">Click to Settle Payment</p>
+            </div>
+          ) : (
+            <div className="bg-forest-950/60 rounded-2xl p-3 border border-brand-700/40">
+              <p className="text-[10px] uppercase font-bold text-emerald-400">Payment Status</p>
+              <p className="text-xs font-black text-emerald-300 mt-0.5">No Balance</p>
+              <p className="text-[10px] text-emerald-400/80 font-bold mt-0.5">Fully Paid ({formatCurrency(customer.totalSpent)})</p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Prominent Balance Due Alert if Member has Outstanding Balance */}
+      {customer.balanceDue && customer.balanceDue > 0 ? (
+        <div className="mb-5 p-4 rounded-2xl bg-amber-50/90 border-2 border-amber-300 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black shrink-0 text-sm shadow-xs">
+              ₹
+            </div>
+            <div>
+              <p className="text-xs font-black text-amber-950">
+                Outstanding Balance: <span className="text-amber-800 text-sm font-black">{formatCurrency(customer.balanceDue)}</span>
+              </p>
+              <p className="text-[11px] text-amber-800 font-medium mt-0.5">
+                Paid: {formatCurrency(customer.totalSpent)} • Remaining balance needs to be collected.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              router.push(`/billing?search=${customer.phone || customer.fullName}`);
+            }}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-gold-600 hover:from-amber-500 hover:to-gold-500 text-white font-black text-xs shadow-md shadow-amber-950/20 flex items-center gap-1.5 transition-all active:scale-95 shrink-0 cursor-pointer border border-gold-300/40"
+          >
+            <span>Settle Balance in Billing</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : null}
 
       {/* Navigation Tabs */}
       <div className="flex border-b border-emerald-100 mb-5 overflow-x-auto">
@@ -283,13 +331,6 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
               <div>
                 <p className="text-slate-500 font-medium">Counselor / Coach:</p>
                 <p className="font-bold text-slate-900">{customer.counselingBy}</p>
-              </div>
-              <div>
-                <p className="text-slate-500 font-medium">Extra Nutrition / Supplements:</p>
-                <p className="font-bold text-amber-900 bg-amber-50 p-2.5 rounded-xl border border-amber-200/80 mt-1 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-gold-600 shrink-0" />
-                  <span>{customer.extraNutrition || 'None recorded'}</span>
-                </p>
               </div>
               <div>
                 <p className="text-slate-500 font-medium">Medical Notes / Preferences:</p>
@@ -349,7 +390,6 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                       <th className="py-2.5 px-3">Flavor / Combo</th>
                       <th className="py-2.5 px-3 text-center">Count</th>
                       <th className="py-2.5 px-3 text-center">Remaining</th>
-                      <th className="py-2.5 px-3">Coach Notes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -359,7 +399,6 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         <td className="py-2.5 px-3 text-brand-900 font-bold">{s.flavorCombo}</td>
                         <td className="py-2.5 px-3 text-center font-bold text-gold-700">{s.shakeCount}</td>
                         <td className="py-2.5 px-3 text-center font-bold text-emerald-700">{s.newBalance}</td>
-                        <td className="py-2.5 px-3 text-slate-500">{s.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -422,12 +461,37 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-brand-900">{inv.invoiceNumber}</span>
                         <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">{inv.type}</span>
+                        {inv.balanceDue > 0 ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded font-black bg-amber-100 text-amber-900 border border-amber-300">
+                            Balance Due: {formatCurrency(inv.balanceDue)}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">
+                            Fully Paid
+                          </span>
+                        )}
                       </div>
-                      <p className="text-slate-500 text-[11px] mt-0.5">{formatDate(inv.date)} • Mode: {inv.paymentMethod}</p>
+                      <p className="text-slate-500 text-[11px] mt-1 font-medium">
+                        Paid: <strong className="text-slate-800">{formatCurrency(inv.amountPaid || inv.total)}</strong> on {formatDate(inv.date)}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="font-black text-gold-900 text-sm">{formatCurrency(inv.total)}</p>
-                      <span className="text-[10px] font-bold text-emerald-700">Paid ({inv.paymentStatus})</span>
+                      {inv.balanceDue > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            router.push(`/billing?search=${customer.phone || customer.fullName}`);
+                          }}
+                          className="mt-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] inline-flex items-center gap-1 transition-colors"
+                        >
+                          <span>Settle in Billing</span>
+                          <ArrowRight className="w-2.5 h-2.5" />
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-700">No Balance</span>
+                      )}
                     </div>
                   </div>
                 ))}
